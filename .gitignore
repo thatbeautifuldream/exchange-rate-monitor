@@ -1,0 +1,12 @@
+# Log file
+exchange_rate_log.txt
+
+# SQLite database
+exchange_rate.db
+
+# Node modules
+node_modules
+
+# Environment variables
+.env
+.DS_Store

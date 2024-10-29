@@ -1,0 +1,35 @@
+{
+  "name": "exchange-rate-monitor",
+  "version": "1.0.0",
+  "description": "An Express app to monitor and provide statistics for USD to INR exchange rates.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "keywords": [
+    "exchange-rate",
+    "cron",
+    "express",
+    "USD",
+    "INR",
+    "API"
+  ],
+  "author": "Milind Mishra",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "node-cron": "^3.0.3",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "eslint": "^9.13.0",
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3"
+  }
+}
