@@ -269,7 +269,7 @@ app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-// Add this function to check if database is empty
+// Function to check if database is empty
 function isDatabaseEmpty() {
   return new Promise((resolve, reject) => {
     db.get("SELECT COUNT(*) as count FROM exchange_rates", (err, row) => {
