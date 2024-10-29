@@ -11,16 +11,34 @@ app.use(express.json());
 const PORT = 3000;
 
 // Initialize SQLite database
-const db = new sqlite3.Database("./exchange_rate.db", (err) => {
+const db = new sqlite3.Database("./exchange_rate.db", async (err) => {
   if (err) {
     console.error("Error opening database:", err);
   } else {
     console.log("Connected to the SQLite database.");
-    db.run(`CREATE TABLE IF NOT EXISTS exchange_rates (
+    db.run(
+      `CREATE TABLE IF NOT EXISTS exchange_rates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       date TEXT,
       rate REAL
-    )`);
+    )`,
+      async (err) => {
+        if (err) {
+          console.error("Error creating table:", err);
+        } else {
+          // Check if database is empty and populate if needed
+          try {
+            const isEmpty = await isDatabaseEmpty();
+            if (isEmpty) {
+              log("Database is empty. Fetching initial exchange rate...");
+              await getAndStoreUSDtoINRRate();
+            }
+          } catch (error) {
+            console.error("Error checking/populating database:", error);
+          }
+        }
+      }
+    );
   }
 });
 
@@ -36,27 +54,32 @@ function log(message) {
 
 // Fetch USD to INR rate and store in SQLite
 async function getAndStoreUSDtoINRRate() {
-  try {
-    const response = await axios.get(
-      "https://api.exchangerate-api.com/v4/latest/USD"
-    );
-    const inrRate = response.data.rates.INR;
-    const date = new Date().toISOString().split("T")[0];
+  return new Promise((resolve, reject) => {
+    axios
+      .get("https://api.exchangerate-api.com/v4/latest/USD")
+      .then((response) => {
+        const inrRate = response.data.rates.INR;
+        const date = new Date().toISOString().split("T")[0];
 
-    db.run(
-      `INSERT INTO exchange_rates (date, rate) VALUES (?, ?)`,
-      [date, inrRate],
-      function (err) {
-        if (err) {
-          log(`Error inserting data: ${err.message}`);
-        } else {
-          log(`Stored in DB: 1 USD = ${inrRate} INR on ${date}`);
-        }
-      }
-    );
-  } catch (error) {
-    log(`Error fetching exchange rate: ${error.message}`);
-  }
+        db.run(
+          `INSERT INTO exchange_rates (date, rate) VALUES (?, ?)`,
+          [date, inrRate],
+          function (err) {
+            if (err) {
+              log(`Error inserting data: ${err.message}`);
+              reject(err);
+            } else {
+              log(`Stored in DB: 1 USD = ${inrRate} INR on ${date}`);
+              resolve();
+            }
+          }
+        );
+      })
+      .catch((error) => {
+        log(`Error fetching exchange rate: ${error.message}`);
+        reject(error);
+      });
+  });
 }
 
 // Fetch the latest rate from the database
@@ -141,3 +164,16 @@ app.get("/api/cron-status", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// Add this function to check if database is empty
+function isDatabaseEmpty() {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT COUNT(*) as count FROM exchange_rates", (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row.count === 0);
+      }
+    });
+  });
+}
