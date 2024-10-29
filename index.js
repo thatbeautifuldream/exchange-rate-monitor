@@ -4,11 +4,35 @@ const cron = require("node-cron");
 const axios = require("axios");
 const sqlite3 = require("sqlite3").verbose();
 const fs = require("fs");
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 const PORT = 3000;
+
+// Swagger configuration
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Exchange Rate API",
+      version: "1.0.0",
+      description: "API for tracking USD to INR exchange rates",
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+        description: "Development server",
+      },
+    ],
+  },
+  apis: ["./index.js"], // files containing annotations
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Initialize SQLite database
 const db = new sqlite3.Database("./exchange_rate.db", async (err) => {
@@ -120,7 +144,36 @@ log("Cron job scheduled. Waiting for next execution...");
 
 // Express Routes
 
-// Get latest rate
+/**
+ * @swagger
+ * /api/latest-rate:
+ *   get:
+ *     summary: Get the latest exchange rate
+ *     description: Retrieves the most recent USD to INR exchange rate
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     date:
+ *                       type: string
+ *                     rate:
+ *                       type: number
+ *       404:
+ *         description: No data available
+ *       500:
+ *         description: Server error
+ */
 app.get("/api/latest-rate", async (req, res) => {
   try {
     const latestRate = await getLatestRate();
@@ -134,7 +187,36 @@ app.get("/api/latest-rate", async (req, res) => {
   }
 });
 
-// Get all rates
+/**
+ * @swagger
+ * /api/rates:
+ *   get:
+ *     summary: Get all exchange rates
+ *     description: Retrieves all stored USD to INR exchange rates
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       date:
+ *                         type: string
+ *                       rate:
+ *                         type: number
+ *       500:
+ *         description: Server error
+ */
 app.get("/api/rates", async (req, res) => {
   try {
     const rates = await getAllRates();
@@ -144,7 +226,29 @@ app.get("/api/rates", async (req, res) => {
   }
 });
 
-// Get cron status
+/**
+ * @swagger
+ * /api/cron-status:
+ *   get:
+ *     summary: Get cron job status
+ *     description: Retrieves the last 10 log entries from the cron job
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 logs:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       500:
+ *         description: Server error
+ */
 app.get("/api/cron-status", (req, res) => {
   // Here, we simply return the log of the last cron job.
   // You may enhance this by storing cron job timestamps or other details.

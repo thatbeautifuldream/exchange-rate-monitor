@@ -25,7 +25,9 @@
     "cors": "^2.8.5",
     "express": "^4.21.1",
     "node-cron": "^3.0.3",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "eslint": "^9.13.0",
